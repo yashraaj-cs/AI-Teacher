@@ -1,67 +1,79 @@
-# 👩‍🏫 AI Teacher • Personal AI Tutor & Memory Agent
+# 👩‍🏫 AI Teacher • Personal AI Tutor & Multimodal Agent
 
-A standalone, intelligent AI Teacher application engineered with **Python**, **Streamlit**, **OpenAI API**, and **Zep Cloud** (`zep-cloud` SDK).
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.40+-FF4B4B.svg)](https://streamlit.io)
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-3776AB.svg)](https://www.python.org/)
+[![Google GenAI](https://img.shields.io/badge/Google%20GenAI-Gemini%203.8%20Flash-4285F4.svg)](https://ai.google.dev/)
+[![Zep Cloud](https://img.shields.io/badge/Memory-Zep%20Cloud%203.x-6366F1.svg)](https://www.getzep.com/)
+[![ElevenLabs](https://img.shields.io/badge/Voice-ElevenLabs%20%2B%20Edge%20TTS-000000.svg)](https://elevenlabs.io/)
 
-The AI Teacher is designed to explain complex Artificial Intelligence, Machine Learning, Deep Learning, and Generative AI concepts with patience, clarity, and real-world analogies. With persistent memory powered by Zep Cloud, it remembers your experience level, learning preferences, questions, and weak points across conversation sessions.
+A production-grade, multimodal AI Tutor application engineered with **Python**, **Streamlit**, **Google Gemini API** (with automatic model failover), **OpenAI API**, **Zep Cloud** graph memory, **Local NumPy RAG**, and a **Dual-Tier Conversational Voice Pipeline**.
+
+> 📖 **Looking for comprehensive technical specs, sequence diagrams, and interview prep?**  
+> Check out the complete [DOCUMENTATION.md](file:///d:/Antigravity%20Projects/AI%20agent/DOCUMENTATION.md).
 
 ---
 
 ## 🌟 Key Features
 
-1. **Session Onboarding Screen**: A sleek, dark-purple aesthetic landing screen that initializes the learner profile before launching the chat room.
-2. **Pedagogical Persona**: Acts as an articulate, warm female AI Teacher with 20 core teaching principles, adapting explanations to the student's background.
-3. **Structured Conceptual Breakdowns**: Formulates explanations using:
-   - 💡 **Definition**
-   - 🧠 **Intuitive Explanation**
-   - 🌟 **Analogy**
-   - ⚙️ **Technical Details**
-   - 🚀 **Practical Example**
-   - 🌐 **Real-World Use Cases**
-   - 🎯 **Check Your Understanding**
-4. **Persistent Long-Term Memory (Zep Cloud)**:
-   - Tracks learner identity (`Zep User`) independently from individual conversations (`Zep Thread`).
-   - Retrieves temporal context blocks (`<USER_SUMMARY>`, `<FACTS>`) for smart personalization.
-   - Preserves memory across `+ New Chat` thread resets.
-5. **Prompt Security**: Treats external memory as untrusted user-level context to prevent instruction hijacking.
-6. **Graceful Degradation**: Clear in-app guidance if API keys are missing or offline.
+1. **Session Onboarding & Recents Switching**:
+   - Sleek dark-purple glassmorphic interface that initializes learner profiles.
+   - Persistent `Recents` sidebar for switching between study threads without losing context.
+2. **Pedagogical Persona (7-Step Breakdown)**:
+   - Formulates explanations using: Definition $\rightarrow$ Intuition $\rightarrow$ Analogy $\rightarrow$ Technical Mechanics $\rightarrow$ Runnable Code $\rightarrow$ Industry Applications $\rightarrow$ Check-Your-Understanding Quiz.
+3. **Persistent Knowledge Graph Memory (Zep Cloud)**:
+   - Tracks learner background independently from individual chat threads.
+   - Automatically recalls learner preferences, skill levels, and prior questions across conversations.
+4. **Curriculum-Grounded RAG (Vector Search)**:
+   - Ingests textbooks and course materials (`.pdf`, `.md`, `.txt`) using `PyPDF`.
+   - Embeds text via `gemini-embedding-001` and ranks chunks via an in-memory NumPy cosine similarity store.
+   - Displays expandable source citations with relevance scores and page numbers.
+5. **Dual-Tier Conversational Voice Pipeline**:
+   - **Speech-to-Text (STT)**: ElevenLabs Scribe v2 realtime WebSocket audio streaming with voice activity detection (VAD).
+   - **Text-to-Speech (TTS)**: ElevenLabs Flash v2.5 streaming TTS pipe.
+   - **Zero-Cost Fallback**: Asynchronous Microsoft Edge Neural TTS (`en-US-JennyNeural`) when ElevenLabs quota is exhausted.
+6. **Multi-Model LLM Resilience**:
+   - Starts on **Gemini 3.8 Flash**. If a rate limit or HTTP 429 error occurs, it dynamically falls back to **Gemini 3.1 Flash Lite** for 60 seconds.
+7. **Prompt Security**:
+   - Treats retrieved memory and RAG excerpts as untrusted user-level context turns to prevent prompt injection.
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Technology Stack Overview
 
 | Component | Technology | Description |
 | :--- | :--- | :--- |
-| **Language** | Python 3.13+ | Core application & business logic |
-| **Frontend / UI** | Streamlit | Chat messages, input, and onboarding interface |
-| **LLM** | OpenAI API (`gpt-4o` / `gpt-4o-mini`) | Generative responses & pedagogical reasoning |
-| **Long-Term Memory** | Zep Cloud (`zep-cloud` SDK) | User profiles, threads, and temporal context graphs |
-| **Environment** | python-dotenv | Secure secret and API key handling |
+| **Frontend / Web UI** | Streamlit 1.40+, Custom CSS | Interactive chat, dark/light themes, dynamic SVG avatar |
+| **Concurrency Layer** | `concurrent.futures` | Parallelizes Zep ingestion, Zep retrieval, and RAG search |
+| **Reasoning Models** | Google Gemini (3.8 Flash / 3.1 Flash Lite) & OpenAI (GPT-4o) | High-speed pedagogical reasoning and token streaming |
+| **Long-Term Memory** | Zep Cloud (`zep-cloud` 3.x) | Cross-thread user profiles & temporal knowledge graph |
+| **RAG Knowledge Base** | PyPDF, NumPy, Gemini Embeddings | PDF extraction, recursive chunking, cosine vector similarity |
+| **Voice Pipeline** | ElevenLabs STT/TTS + Microsoft Edge Neural TTS | Low-latency voice conversation with automatic fallback |
 
 ---
 
-## 📐 Architecture & Flow
+## 📐 Architecture & Execution Flow
 
 ```
-USER
- │
- ▼
-Streamlit UI (Session Screen / Chat Interface)
- │
- ▼
-Python App Controller & Memory Coordinator
- │
- ├──► Zep Cloud (zep-cloud SDK)
- │     ├── 1. Ingest User Query (RFC3339 timestamped)
- │     └── 2. Retrieve Relevant Context (<USER_SUMMARY>, <FACTS>)
- │
- ├──► OpenAI API (openai SDK)
- │     └── 3. Send Teacher System Prompt + Untrusted Context + Chat History
- │
- ├──► Zep Cloud
- │     └── 4. Store Assistant Response in Thread Memory
- │
- ▼
-Streamlit UI (Rendered to Learner)
+Learner (Voice / Text)
+  │
+  ▼
+Streamlit UI Controller
+  │
+  ├──► Concurrency Orchestrator (ThreadPoolExecutor max_workers=3)
+  │      ├── [Thread 1] Asynchronously ingest turn into Zep Cloud
+  │      ├── [Thread 2] Retrieve learner context graph (<USER_SUMMARY>, <FACTS>)
+  │      └── [Thread 3] Embed query & search NumPy Vector Store (top-k)
+  │
+  ├──► Unified Context & Security Assembler (System Prompt + Untrusted Context)
+  │
+  ├──► Google Gemini Service (Streaming Generation with 3.8 -> 3.1 Lite failover)
+  │      │
+  │      ├── Token Stream ────────► Streamlit Live Chat UI
+  │      │
+  │      └── Sentence Stream ─────► Voice Pipe (ElevenLabs / Edge-TTS) ──► Audio Player
+  │
+  ▼
+Post-turn Assistant Ingestion into Zep Cloud (Graph Memory building)
 ```
 
 ---
@@ -72,122 +84,103 @@ Streamlit UI (Rendered to Learner)
 d:/Antigravity Projects/AI agent/
 │
 ├── app.py                      # Main Streamlit application entry point
+├── DOCUMENTATION.md            # Comprehensive Technical Master Documentation
+├── README.md                   # Repository overview & quickstart
+├── requirements.txt            # Python dependencies
 │
 ├── services/
-│   ├── __init__.py
-│   ├── openai_service.py       # OpenAI client with streaming & error handling
-│   ├── zep_service.py          # Zep Cloud SDK client (User, Thread, Messages, Context)
-│   └── memory_service.py       # Memory & pedagogical workflow coordinator
+│   ├── gemini_service.py       # Google GenAI service with automatic quota fallback
+│   ├── openai_service.py       # OpenAI GPT-4o streaming service
+│   ├── zep_service.py          # Zep Cloud SDK client (User, Thread, Memory Graph)
+│   ├── memory_service.py       # High-speed concurrent orchestrator (ThreadPoolExecutor)
+│   ├── rag_service.py          # High-level RAG indexer and query coordinator
+│   └── voice/
+│       ├── elevenlabs_stt.py   # Real-time WebSocket STT with Voice Activity Detection
+│       ├── elevenlabs_tts.py   # Streaming TTS with VoiceStreamPipe
+│       └── neural_tts.py       # Free, quota-free Microsoft Edge Neural TTS fallback
+│
+├── rag/
+│   ├── ingestion.py            # PDF and text document loader
+│   ├── chunking.py             # Recursive boundary-aware text chunker
+│   ├── embeddings.py           # Gemini & OpenAI embedding adapters
+│   ├── vector_store.py         # Local NumPy float32 cosine similarity engine
+│   └── retriever.py            # Grounded chunk retriever
 │
 ├── prompts/
-│   ├── __init__.py
-│   └── teacher_prompt.py       # AI Teacher pedagogical instructions & prompt formatting
-│
-├── utils/
-│   ├── __init__.py
-│   ├── session_manager.py      # Streamlit session_state lifecycle management
-│   └── helpers.py              # Identifier generation & sanitization utilities
+│   ├── teacher_prompt.py       # Core pedagogical rules and 7-step explanation breakdown
+│   └── rag_teacher_prompt.py   # RAG context injection and anti-hallucination constraints
 │
 ├── components/
-│   ├── __init__.py
-│   ├── session_screen.py       # Modern dark-purple session initialization card
-│   ├── chat_interface.py       # Chat feed, message bubbles, and sidebar controls
-│   └── avatar.py               # Lightweight SVG/CSS animated avatar states
+│   ├── avatar.py               # Dynamic SVG avatar (Idle, Thinking, Teaching)
+│   ├── session_screen.py       # Learner onboarding and profile creation
+│   └── chat_interface.py       # Chat feed, audio players, and source badges
 │
-├── assets/
-│   └── style.css               # Dark-purple AI aesthetic design system
-│
-├── .env                        # Local secrets (ignored by Git)
-├── .env.example                # Environment variables template
-├── .gitignore                  # Git ignore rules
-├── requirements.txt            # Project dependencies
-└── README.md                   # Documentation & guide
+├── knowledge_base/             # Drop educational PDFs/documents here
+├── data/vector_store/          # Persisted index: embeddings.npy and chunks_metadata.json
+└── scripts/                    # Ingestion and testing verification scripts
 ```
 
 ---
 
-## ⚙️ Environment Variables
+## 🚀 Quickstart Guide
 
-Create a `.env` file in the project root:
-
-```env
-# OpenAI API Key (Required for AI Teacher responses)
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Zep Cloud API Key (Required for persistent memory)
-# Obtain from https://app.getzep.com/
-ZEP_API_KEY=your_zep_api_key_here
-
-# OpenAI Model configuration (e.g. gpt-4o, gpt-4o-mini)
-OPENAI_MODEL=gpt-4o
-```
-
-> **Security Note**: Never commit your `.env` file to version control. Keys are loaded securely on the backend and are never displayed in the Streamlit UI.
-
----
-
-## 🚀 Installation & Running
-
-### 1. Clone or Open the Workspace
-Navigate to the project root directory:
+### 1. Setup Virtual Environment
 ```bash
+# Clone or navigate to project
 cd "d:\Antigravity Projects\AI agent"
-```
 
-### 2. Create and Activate Virtual Environment
-```bash
-# Create virtual environment
+# Create and activate venv
 python -m venv venv
-
-# Activate on Windows PowerShell:
-.\venv\Scripts\Activate.ps1
-
-# Or on Command Prompt:
-.\venv\Scripts\activate.bat
+.\venv\Scripts\Activate.ps1   # On Windows
+# source venv/bin/activate    # On Linux/macOS
 ```
 
-### 3. Install Dependencies
+### 2. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Run the Streamlit Application
+### 3. Configure `.env` Secrets
+Create a `.env` file in the root directory:
+```env
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-3.8-flash
+GEMINI_FALLBACK_MODEL=gemini-3.1-flash-lite
+
+ZEP_API_KEY=your_zep_api_key_here
+
+EMBEDDING_PROVIDER=gemini
+GEMINI_EMBEDDING_MODEL=gemini-embedding-001
+
+# Optional Voice (ElevenLabs):
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+ELEVENLABS_VOICE_ID=JBFqnCBsd6RMkjVDRZzb
+```
+
+### 4. Index Knowledge Base (Optional)
+Drop your course PDFs into `knowledge_base/` and run:
+```bash
+python scripts/index_knowledge_base.py
+```
+
+### 5. Launch the Application
 ```bash
 streamlit run app.py
 ```
+Open your browser at `http://localhost:8501`.
 
 ---
 
-## 🧪 Testing the Memory Workflow
+## 🧪 Testing & Verification Scripts
 
-You can verify that Zep persistent memory works across sessions and conversation threads:
+The `scripts/` directory provides diagnostic test scripts:
 
-### Step 1: Thread 1 (Learner Profile & Background)
-1. Launch the app and enter your name (e.g. `Yashraj`).
-2. Click **Initialize New Session**.
-3. Send the message:
-   ```
-   "My name is Yashraj. I am a beginner in AI and prefer learning through practical, real-world examples."
-   ```
-4. The AI Teacher will greet you and record this interaction into Zep.
-
-### Step 2: Thread 2 (Cross-Thread Memory Recall)
-1. Click the **➕ New Chat** button in the sidebar.
-   - Notice that your chat history resets to a clean greeting.
-   - Your `Learner ID` remains identical (`learner_yashraj`), but a new `Thread ID` is generated.
-2. Ask:
-   ```
-   "Explain embeddings."
-   ```
-3. Zep retrieves your learner profile from Thread 1. The AI Teacher tailors its explanation specifically for a beginner, highlighting practical examples rather than heavy mathematical jargon.
-4. Expand **🔍 Session & Memory Details** in the sidebar to inspect the retrieved context block directly.
+- `python scripts/verify_stage3_integration.py`: End-to-end test of Zep, RAG, Gemini streaming, and Voice fallback.
+- `python scripts/test_retrieval.py`: Tests semantic search against the indexed vector store.
+- `python scripts/test_voice_full_pipeline.py`: Tests the microphone STT and TTS speech output.
 
 ---
 
-## 🔮 Roadmap / Future Features
-
-- [ ] **Voice Pipeline**: Fast request/response speech-to-text (Whisper) and text-to-speech (TTS).
-- [ ] **Animated 3D/Video Avatar**: Lifelike visual expressions and lip-sync.
-- [ ] **Agent Tools**: Web search, Python code execution runner, and math solver.
-- [ ] **Curated RAG Knowledge Base**: Ingest specialized AI/ML textbooks and lecture notes.
-- [ ] **Interactive Quizzes & Learning Plans**: Automated weekly syllabus generation and progress tracking.
+## 📄 License & Attribution
+Designed for pair-learning and education. Built with modern Agentic AI design patterns. For complete architectural explanations, design rationale, and technical interview questions, please consult [DOCUMENTATION.md](file:///d:/Antigravity%20Projects/AI%20agent/DOCUMENTATION.md).
